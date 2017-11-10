@@ -152,6 +152,13 @@ public class TestDriverMongo {
 	}
 	
 	
+	@Test(dependsOnGroups = {"testInsertMany"})
+	public void testFindUserUsingParsedJSON() { // Amount of people who are not paid in USD
+		FindIterable<Document> mongoIter = collection.find(Filters.eq("infoUser", Document.parse("{gender: 'M', category: 22, currency: 'CAD'}")));
+		assertEquals(1, mongoIter.into(new ArrayList<Document>()).size());
+		printOutput(mongoIter);
+	}
+	
 	//////////////////////
 	// NON-TEST METHODS //
 	//////////////////////
