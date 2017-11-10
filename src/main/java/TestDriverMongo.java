@@ -128,7 +128,7 @@ public class TestDriverMongo {
 	
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
-	public void testQueryUser01Exist() { // Tests if user-01 exists
+	public void testQueryGetUser01SalaryAndEmail() { // Tests if user-01 exists
 		FindIterable<Document> mongoIter = collection.find(Filters.eq("name", "user-01"))
 			  .projection(Projections.include("email", "salary"));
 		assertEquals(1, mongoIter.into(new ArrayList<Document>()).size(), "Unable to find user 'user-01'");
@@ -180,7 +180,7 @@ public class TestDriverMongo {
 	
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
-	public void testFindFemalesAndDisplayOnlyEmailAndCategory() { //
+	public void testFindFemalesAndGetOnlyEmailAndCategory() { //
 		FindIterable<Document> mongoIter = collection.find(Filters.eq("infoUser.gender", "F"))
 			  .projection(Projections.include("email", "infoUser.category"));
 		assertEquals(3, mongoIter.into(new ArrayList<Document>()).size(), "Wrong number of females found");
