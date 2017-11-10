@@ -7,6 +7,7 @@ import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 
+import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
@@ -20,9 +21,9 @@ import java.util.Collections;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestDriverMongo {
 	
-	MongoClient client = new MongoClient("localhost", 32768);
-	MongoDatabase db = client.getDatabase("test");
-	MongoCollection<Document> collection = db.getCollection("test");
+	private MongoClient client = new MongoClient("localhost", 32768);
+	private MongoDatabase db = client.getDatabase("test");
+	private MongoCollection<Document> collection = db.getCollection("test");
 	
 	
 	public void printOutput(FindIterable<Document> output) {
