@@ -2,12 +2,13 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.Updates;
+
 import org.bson.Document;
 import org.testng.annotations.*;
 
+import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Projections.*;
+import static com.mongodb.client.model.Updates.*;
 import static org.testng.Assert.*;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class TestDriverMongo {
 		
 		user.put("infoUser", infoUser);
 		collection.insertOne(user);
-		FindIterable<Document> iter = collection.find(Filters.eq("name", "user-01"));
+		FindIterable<Document> iter = collection.find(eq("name", "user-01"));
 		assertEquals(1, iter.into(new ArrayList<Document>()).size());
 	}
 	
@@ -104,7 +105,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testQuerySalary() { // Amount of a people where 30000 >= salary >= 50000 is true
-		FindIterable<Document> mongoIter = collection.find(Filters.and(Filters.gte("salary", 30000), Filters.lte("salary", 50000)));
+		FindIterable<Document> mongoIter = collection.find(and(gte("salary", 30000), lte("salary", 50000)));
 		assertEquals(4, mongoIter.into(new ArrayList<Document>()).size(),
 			  "Wrong number of users with a salary between 30000 and 50000 inclusively");
 		printOutput(mongoIter);
@@ -113,7 +114,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testQueryGender() { // Amount of females
-		FindIterable<Document> mongoIter = collection.find(Filters.eq("infoUser.gender", "F"));
+		FindIterable<Document> mongoIter = collection.find(eq("infoUser.gender", "F"));
 		assertEquals(3, mongoIter.into(new ArrayList<Document>()).size(), "Wrong number of female users");
 		printOutput(mongoIter);
 	}
@@ -121,7 +122,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testQuerySkills() { // Amount of people who do not have the "DEV" skill
-		FindIterable<Document> mongoIter = collection.find(Filters.ne("skills", "DEV"));
+		FindIterable<Document> mongoIter = collection.find(ne("skills", "DEV"));
 		assertEquals(4, mongoIter.into(new ArrayList<Document>()).size(), "Wrong number of users with the skill 'DEV'");
 		printOutput(mongoIter);
 	}
@@ -129,8 +130,8 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testQueryGetUser01SalaryAndEmail() { // Tests if user-01 exists
-		FindIterable<Document> mongoIter = collection.find(Filters.eq("name", "user-01"))
-			  .projection(Projections.include("email", "salary"));
+		FindIterable<Document> mongoIter = collection.find(eq("name", "user-01"))
+			  .projection(include("email", "salary"));
 		assertEquals(1, mongoIter.into(new ArrayList<Document>()).size(), "Unable to find user 'user-01'");
 		printOutput(mongoIter);
 	}
@@ -138,9 +139,8 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testUpdate() {
-		collection.updateOne(Filters.eq("name", "user-02"), Updates.set("salary", 1337));
-		FindIterable<Document> mongoIter = collection.find(Filters.and(
-			  Filters.eq("name", "user-02"), Filters.eq("salary", 1337)));
+		collection.updateOne(eq("name", "user-02"), set("salary", 1337));
+		FindIterable<Document> mongoIter = collection.find(and(eq("name", "user-02"), eq("salary", 1337)));
 		assertEquals(1, mongoIter.into(new ArrayList<Document>()).size(), "Failed to update salary of user-02 to 1337");
 		printOutput(mongoIter);
 	}
@@ -148,7 +148,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testFindUsersNotPaidInUSD() { // Amount of people who are not paid in USD
-		FindIterable<Document> mongoIter = collection.find(Filters.ne("infoUser.currency", "USD"));
+		FindIterable<Document> mongoIter = collection.find(ne("infoUser.currency", "USD"));
 		assertEquals(5, mongoIter.into(new ArrayList<Document>()).size());
 		printOutput(mongoIter);
 	}
@@ -156,7 +156,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testFindUserUsingParsedJSON() {
-		FindIterable<Document> mongoIter = collection.find(Filters.eq("infoUser",
+		FindIterable<Document> mongoIter = collection.find(eq("infoUser",
 			  Document.parse("{gender: 'M', category: 22, currency: 'CAD'}")));
 		assertEquals(1, mongoIter.into(new ArrayList<Document>()).size());
 		printOutput(mongoIter);
@@ -165,7 +165,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testFindUsersWithNonExistingField() { //
-		FindIterable<Document> mongoIter = collection.find(Filters.exists("FIELD_THAT_DOES_NOT_EXIST", true));
+		FindIterable<Document> mongoIter = collection.find(exists("FIELD_THAT_DOES_NOT_EXIST", true));
 		assertEquals(0, mongoIter.into(new ArrayList<Document>()).size(), "Field does not exist, no rows should return");
 		printOutput(mongoIter);
 	}
@@ -173,7 +173,7 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testFindUsersWithExistingField() { //
-		FindIterable<Document> mongoIter = collection.find(Filters.exists("name", true));
+		FindIterable<Document> mongoIter = collection.find(exists("name", true));
 		assertEquals(collection.count(), mongoIter.into(new ArrayList<Document>()).size());
 		printOutput(mongoIter);
 	}
@@ -181,13 +181,39 @@ public class TestDriverMongo {
 	
 	@Test(dependsOnGroups = {"testInsertMany"})
 	public void testFindFemalesAndGetOnlyEmailAndCategory() { //
-		FindIterable<Document> mongoIter = collection.find(Filters.eq("infoUser.gender", "F"))
-			  .projection(Projections.include("email", "infoUser.category"));
+		FindIterable<Document> mongoIter = collection.find(eq("infoUser.gender", "F"))
+			  .projection(include("email", "infoUser.category"));
 		assertEquals(3, mongoIter.into(new ArrayList<Document>()).size(), "Wrong number of females found");
 		assertFalse((mongoIter.into(new ArrayList<Document>())).get(0).containsKey("name"),
 			  "First row contains field 'name', but shouldn't have");
 		assertTrue((mongoIter.into(new ArrayList<Document>())).get(0).containsKey("email"),
 			  "First row does not contains field 'email', but should have");
+		printOutput(mongoIter);
+	}
+	
+	
+	@Test(dependsOnGroups = {"testInsertMany"})
+	public void testFindAllAndGetOnlyEmailAndCategoryAndLastElementInSkills() { // Naming getting out of hand
+		FindIterable<Document> mongoIter = collection.find()
+			  .projection(fields(
+			  	  include("email", "infoUser.category"),
+				    slice("skills", -1)));
+		// Projections.slice("skills", 1) would give the first element,
+		// Projections.slice("skills", 2) would give the first two elements
+		// TODO: assert
+		printOutput(mongoIter);
+	}
+	
+	
+	@Test(dependsOnGroups = {"testInsertMany"})
+	public void testUpdateOne() { // Naming getting out of hand
+		collection.updateOne(eq("name", "user-02"), combine(set("salary", 1338), set("infoUser.category", 707)));
+		FindIterable<Document> mongoIter = collection.find(eq("name", "user-02"));
+		Document testTarget = mongoIter.into(new ArrayList<Document>()).get(0);
+		assertTrue((int)testTarget.get("salary") == 1338,
+			  "Salary not updated properly");
+		assertTrue((int)(((Document)testTarget.get("infoUser")).get("category")) == 707,
+			  "Category has not been updated properly");
 		printOutput(mongoIter);
 	}
 	
